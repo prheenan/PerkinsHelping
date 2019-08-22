@@ -1,0 +1,6 @@
+[submodule "Code/Lib/AppFEATHER"]
+	path = Code/Lib/AppFEATHER
+	url = https://github.com/prheenan/AppFEATHER.git
+[submodule "Code/Lib/UtilForce"]
+	path = Code/Lib/UtilForce
+	url = https://github.com/prheenan/UtilForce.git
