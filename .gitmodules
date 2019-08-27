@@ -7,3 +7,6 @@
 [submodule "Code/Lib/UtilGeneral"]
 	path = Code/Lib/UtilGeneral
 	url = https://github.com/prheenan/UtilGeneral.git
+[submodule "Code/Lib/AppWLC"]
+	path = Code/Lib/AppWLC
+	url = https://github.com/prheenan/AppWLC.git
