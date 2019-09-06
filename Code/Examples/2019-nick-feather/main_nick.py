@@ -109,6 +109,7 @@ def run():
     # understand after this line
     all_contour_changes = []
     ruptures = []
+    fits_all = []
     for i,fec in enumerate(fecs):
         print("Analyzing curve {:d} / {:d}".format(i,len(fecs)))
         split_fec, pred_info = \
@@ -122,6 +123,7 @@ def run():
         contour_changes = np.diff(contour_lengths)
         all_contour_changes.extend(contour_changes)
         ruptures.append([f[1] for f in fits])
+        fits_all.append(fits)
         """
         # uncomment to plot 
         plt.close()
