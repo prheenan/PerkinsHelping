@@ -24,6 +24,7 @@ import re
 from Lib.UtilForce.UtilIgor import PxpLoader
 
 from Lib.UtilForce.UtilIgor import TimeSepForceObj
+from Lib.UtilGeneral import CheckpointUtilities
 
 name_pattern = re.compile(r"""
                           (\D+) # non-digits (like 'Image')
@@ -65,6 +66,7 @@ def fit_based_on_FEATHER(pred_info,split_fec):
     # figure out where each event ends
     ends = [e for e in pred_info.event_idx]
     slices = [slice(i, f) for i, f in zip(starts, ends)]
+    slices = [s for s in slices if s.start < s.stop - 2]
     t_fec, x_fec, F_fec = split_fec.retract.Time, split_fec.retract.Separation, split_fec.retract.Force
     x_fec -= x_fec[surface]
     x_arr = [x_fec[s] for s in slices]
@@ -83,11 +85,14 @@ def fit_based_on_FEATHER(pred_info,split_fec):
     to_ret = [ [L0,F[-1],x,F] for (L0,F),x in zip(fits,x_arr)]
     return to_ret
 
-def read_and_convert(pxp_file):
-    data = PxpLoader.LoadPxp(pxp_file, name_pattern=name_pattern,
-                             valid_ext_func=lambda _: True)
-    # convert to my preferred format
-    fecs = [ convert_data_to_fec(ex) for _,ex in data.items()]
+def read_and_convert(pxp_file,use_split_names=False):
+    if use_split_names:
+        data = PxpLoader.LoadPxp(pxp_file, name_pattern=name_pattern,
+                                 valid_ext_func=lambda _: True)
+        # convert to my preferred format
+        fecs = [ convert_data_to_fec(ex) for _,ex in data.items()]
+    else:
+        fecs =  FEC_Util.ReadInData(FullName=pxp_file)
     return fecs
 
 def run():
@@ -95,14 +100,20 @@ def run():
 
     """
     # read in the data and convert
-    pxp_file = "../../../Data/Nick_2019/Newsies.pxp"
-    fecs = read_and_convert(pxp_file)
+    pxp_file = r"""C:\Users\Perkins Lab\PerkinsHelping\Code\Examples\2019-nick-feather\just_the_data.pxp"""
+    use_pkl_if_available = True
+    force_read_pxp = not use_pkl_if_available
+    fecs = CheckpointUtilities.getCheckpoint("./nick.pkl",
+                                             read_and_convert,
+                                             force_read_pxp, pxp_file, use_split_names=False)
     # understand after this line
     all_contour_changes = []
     ruptures = []
-    for fec in fecs:
+    fits_all = []
+    for i,fec in enumerate(fecs):
+        print("Analyzing curve {:d} / {:d}".format(i,len(fecs)))
         split_fec, pred_info = \
-            Detector._predict_full(fec, threshold=1e-3, tau_fraction=1e-3,
+            Detector._predict_full(fec, threshold=2e-2, tau_fraction=2e-3,
                                    f_refs=[Detector.delta_mask_function])
         # fit to the eventsfeather sees
         # returninng: L0, F_rupture, x_wlc, F_wlc
@@ -112,18 +123,30 @@ def run():
         contour_changes = np.diff(contour_lengths)
         all_contour_changes.extend(contour_changes)
         ruptures.append([f[1] for f in fits])
+        fits_all.append(fits)
         """
+        # uncomment to plot 
         plt.close()
-        plt.subplot(2, 1, 1)
+        ax_F = plt.subplot(3, 1, 1)
         X, F = split_fec.retract.Separation, split_fec.retract.Force
+        T = split_fec.retract.Time
+        F_limit = [-30, 100]
+        plt.plot(T, F * 1e12)
+        plt.plot(T, pred_info.interp(T) * 1e12)
+        plt.ylim(F_limit)
+        PlotUtilities.lazyLabel("", "$F$ (pN)", "")
+        ax_P = plt.subplot(3, 1, 2)
+        plt.semilogy(split_fec.retract.Time, pred_info.probabilities[-1])
+        PlotUtilities.lazyLabel("Time (s)", "FEATHER Probability (au)", "")
+        plt.subplot(3, 1, 3)
         plt.plot(X * 1e9, F * 1e12, color='k', alpha=0.3)
+        PlotUtilities.no_x_label(ax=ax_F)
         for i in pred_info.event_idx:
             plt.axvline(X[i] * 1e9)
-        for L0, x, F in fits:
+        for L0, F_rupture, x, F in fits:
             plt.plot(x * 1e9, F * 1e12, linestyle='--')
-        plt.ylim([-30, 100])
-        plt.subplot(2, 1, 2)
-        plt.semilogy(split_fec.retract.Time, pred_info.probabilities[-1])
+        plt.ylim(F_limit)
+        PlotUtilities.lazyLabel("Separation (nm)", "$F$ (pN)", "")
         plt.show()
         """
     # make a plot of FEC (just the last one) + contour length
@@ -146,12 +169,12 @@ def run():
     plt.hist(np.concatenate(ruptures) * 1e12)
     PlotUtilities.lazyLabel("$F_R$ (pN)", "$N$ ", "")
     plt.subplot(4, 1, 4)
-    plt.loglog(np.concatenate(ruptures_per_dL) * 1e12,
-               np.array(all_contour_changes) * 1e9,
-               'r.')
+    plt.semilogy(np.concatenate(ruptures_per_dL) * 1e12,
+                 np.array(all_contour_changes) * 1e9,
+                 'r.')
     PlotUtilities.lazyLabel("$F_R$ (pN)",
                             "$\mathbf{\Delta}L_\mathbf{0}$ ", "")
-    plt.xlim([10, 2000])
+    plt.xlim([0, 75])
     PlotUtilities.savefig(fig, "./nick.png")
 
 
