@@ -15,6 +15,7 @@ from Lib.AppWLC.Code import TracerWLC
 
 from Lib.UtilGeneral import PlotUtilities
 from Lib.UtilGeneral.Plot import Annotations
+from Lib.UtilGeneral.Plot import Scalebar
 
 
 def run():
@@ -32,7 +33,6 @@ def run():
             for L0_nm_tmp in L_arr_nm]
     n_rows = len(L_arr_nm)
     n_cols = n_ex
-    from Lib.UtilGeneral.Plot import Scalebar
     plt.close()
     axs = []
     fig = PlotUtilities.figure(figsize=(7, 7))
