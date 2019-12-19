@@ -10,3 +10,6 @@
 [submodule "Code/Lib/AppWLC"]
 	path = Code/Lib/AppWLC
 	url = https://github.com/prheenan/AppWLC.git
+[submodule "Code/Lib/UtilIgorPro"]
+	path = Code/Lib/UtilIgorPro
+	url = https://github.com/prheenan/UtilIgorPro.git
