@@ -95,21 +95,53 @@ def read_and_convert(pxp_file,use_split_names=False):
         fecs =  FEC_Util.ReadInData(FullName=pxp_file)
     return fecs
 
+def plot_split_fec(split_fec,ruptures,pred_info,fits,all_contour_changes):
+    # make a plot of FEC (just the last one) + contour length
+    # the last rupture isn't asociated with
+    ruptures_per_dL = [r[:-1] for r in ruptures]
+    X, F = split_fec.retract.Separation, split_fec.retract.Force
+    plt.close()
+    fig = PlotUtilities.figure(figsize=(3, 7))
+    plt.subplot(4, 1, 1)
+    plt.plot(X * 1e9, F * 1e12, color='k', alpha=0.3)
+    for i in pred_info.event_idx:
+        plt.axvline(X[i] * 1e9)
+    for L0, _, x, F in fits:
+        plt.plot(x * 1e9, F * 1e12, linestyle='--')
+    PlotUtilities.lazyLabel("Extension (nm)", "$F$ (pN)", "")
+    plt.subplot(4, 1, 2)
+    plt.hist(np.array(all_contour_changes) * 1e9)
+    PlotUtilities.lazyLabel("$\mathbf{\Delta}L_\mathbf{0}$ (nm)", "$N$ ", "")
+    plt.subplot(4, 1, 3)
+    plt.hist(np.concatenate(ruptures) * 1e12)
+    PlotUtilities.lazyLabel("$F_R$ (pN)", "$N$ ", "")
+    plt.subplot(4, 1, 4)
+    plt.semilogy(np.concatenate(ruptures_per_dL) * 1e12,
+                 np.array(all_contour_changes) * 1e9,
+                 'r.')
+    PlotUtilities.lazyLabel("$F_R$ (pN)",
+                            "$\mathbf{\Delta}L_\mathbf{0}$ ", "")
+    plt.xlim([0, 75])
+    PlotUtilities.savefig(fig, "./nick.png")
+
 def run():
     """
 
     """
     # read in the data and convert
-    pxp_file = r"""C:\Users\Perkins Lab\PerkinsHelping\Code\Examples\2019-nick-feather\just_the_data.pxp"""
-    use_pkl_if_available = True
-    force_read_pxp = not use_pkl_if_available
+    pxp_file = r"""./Newsies.pxp"""
+    force_read_pxp = True
     fecs = CheckpointUtilities.getCheckpoint("./nick.pkl",
                                              read_and_convert,
-                                             force_read_pxp, pxp_file, use_split_names=False)
+                                             force_read_pxp, pxp_file,
+                                             use_split_names=True)
     # understand after this line
     all_contour_changes = []
     ruptures = []
     fits_all = []
+    if len(fecs) == 0:
+        assert False , "Didn't find any FECs to analyze. Check your names. "
+    # POST: should have found some FECs
     for i,fec in enumerate(fecs):
         print("Analyzing curve {:d} / {:d}".format(i,len(fecs)))
         split_fec, pred_info = \
@@ -149,33 +181,9 @@ def run():
         PlotUtilities.lazyLabel("Separation (nm)", "$F$ (pN)", "")
         plt.show()
         """
-    # make a plot of FEC (just the last one) + contour length
-    # the last rupture isn't asociated with
-    ruptures_per_dL = [r[:-1] for r in ruptures]
-    X, F = split_fec.retract.Separation, split_fec.retract.Force
-    plt.close()
-    fig = PlotUtilities.figure(figsize=(3, 7))
-    plt.subplot(4, 1, 1)
-    plt.plot(X * 1e9, F * 1e12, color='k', alpha=0.3)
-    for i in pred_info.event_idx:
-        plt.axvline(X[i] * 1e9)
-    for L0, _, x, F in fits:
-        plt.plot(x * 1e9, F * 1e12, linestyle='--')
-    PlotUtilities.lazyLabel("Extension (nm)", "$F$ (pN)", "")
-    plt.subplot(4, 1, 2)
-    plt.hist(np.array(all_contour_changes) * 1e9)
-    PlotUtilities.lazyLabel("$\mathbf{\Delta}L_\mathbf{0}$ (nm)", "$N$ ", "")
-    plt.subplot(4, 1, 3)
-    plt.hist(np.concatenate(ruptures) * 1e12)
-    PlotUtilities.lazyLabel("$F_R$ (pN)", "$N$ ", "")
-    plt.subplot(4, 1, 4)
-    plt.semilogy(np.concatenate(ruptures_per_dL) * 1e12,
-                 np.array(all_contour_changes) * 1e9,
-                 'r.')
-    PlotUtilities.lazyLabel("$F_R$ (pN)",
-                            "$\mathbf{\Delta}L_\mathbf{0}$ ", "")
-    plt.xlim([0, 75])
-    PlotUtilities.savefig(fig, "./nick.png")
+    plot_split_fec(split_fec, ruptures, pred_info, fits,
+                   all_contour_changes)
+
 
 
 if __name__ == "__main__":
