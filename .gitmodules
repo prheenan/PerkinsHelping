@@ -13,3 +13,9 @@
 [submodule "Code/Lib/UtilIgorPro"]
 	path = Code/Lib/UtilIgorPro
 	url = https://github.com/prheenan/UtilIgorPro.git
+[submodule "Code/Lib/AppIWT"]
+	path = Code/Lib/AppIWT
+	url = https://github.com/prheenan/AppIWT.git
+[submodule "Code/Lib/AppWHAM"]
+	path = Code/Lib/AppWHAM
+	url = https://github.com/prheenan/AppWHAM.git
